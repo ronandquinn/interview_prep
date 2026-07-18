@@ -1,0 +1,91 @@
+PHASE 4 BUILDING THE CORE FEATURE
+    ROUTE
+    ─────
+    -> Add to config/routes.rb: What we add is informed by PHASE 1 Q3 - Scope
+      resources :[resource], only: [:index]
+    -> After running generator: check for duplicate routes
+      generator adds: get "[resource]/index"
+      remove this, keep the resources line
+
+
+    GENERATE CONTROLLER
+    ───────────────────
+    docker compose exec web bin/rails generate controller [Resource] index
+    → Creates: app/controllers/[resource]_controller.rb
+    → Creates: app/views/[resource]/index.html.erb
+    → Creates: app/helpers/[resource]_helper.rb
+
+
+    CONTROLLER — index action
+    ─────────────────────────
+    require "net/http"  #needed if not autoloaded
+    require "json"      #needed if not autoloaded
+
+    def index
+      uri = URI("[base_url]/[endpoint]") #informed by PHASE2 BASE_URL and ENDPOINT - Should be abstracted as per PHASE1 AUTHENTICATION
+      
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true          ← always for https
+      http.open_timeout = 2        ← seconds to connect
+      http.read_timeout = 5        ← seconds to receive response
+      
+      request = Net::HTTP::Get.new(uri)
+      
+      #If API needs auth header:
+        request["Authorization"] = "Bearer #{token}"
+      
+      response = http.request(request)
+      
+      if response.is_a?(Net::HTTPSuccess)
+        parsed = JSON.parse(response.body)
+        → If array at root:    @items = parsed
+        → If wrapped in key:   @items = parsed["key"]
+        → If single object:    @item = parsed
+      else
+        @items = []
+        flash.now[:alert] = "The service returned an error."
+      end
+
+    rescue Net::OpenTimeout, Net::ReadTimeout
+      @items = []
+      flash.now[:alert] = "The service took too long to respond."
+
+    rescue SocketError, JSON::ParserError => e
+      Rails.logger.error("API request failed: #{e.class}: #{e.message}")
+      @items = []
+      flash.now[:alert] = "Data could not be loaded."
+    end
+
+
+  VIEW — index.html.erb
+  ─────────────────────
+    #Flash message first:
+      <% if flash.now[:alert] %>
+        <p><%= flash.now[:alert] %></p>
+      <% end %>
+
+    #If items present:
+      <% if @items.any? %>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>City</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @items.each do |item| %>
+              <tr>
+                <td><%= item["name"] %></td>
+                <td><%= mail_to item["email"] %></td>
+                <td><%= item.dig("address", "city") %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+
+    #If empty and no error:
+      <% elsif flash.now[:alert].blank? %>
+        <p>No results found.</p>
+      <% end %>

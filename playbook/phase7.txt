@@ -1,0 +1,144 @@
+PHASE 7 EXTENSION SCENARIOS
+
+  FILTER BY FIELD
+  ───────────────
+  Requirements clarification:
+  → Which field to filter on?
+  → Exact match or partial match?
+  → User-supplied via form or hardcoded?
+
+  Controller — after parsing:
+  → filter_value = params[:field_name]
+  → if filter_value.present?
+      @items = @items.select { |i| i["field"] == filter_value }
+    end
+
+  View — add form above table:
+  → form_with url: [resource]_path, method: :get
+  → text_field or select for filter value
+  → submit button
+  → form GET submits to same page with param
+
+  ─────────────────────────────────────────
+
+  SEARCH BY NAME/TEXT FIELD
+  ──────────────────────────
+  Requirements clarification:
+  → Which field to search?
+  → Exact or partial match?
+  → Case sensitive?
+
+  Controller — after parsing:
+  → query = params[:query]
+  → if query.present?
+      @items = @items.select do |i|
+        i["name"].downcase.include?(query.downcase)
+      end
+    end
+
+  View — add search form:
+  → Same form pattern as filter
+  → text_field :query, value: params[:query]
+  → placeholder: "Search..."
+
+  ─────────────────────────────────────────
+
+  SORT RESULTS
+  ────────────
+  Requirements clarification:
+  → Which field to sort by?
+  → Ascending or descending?
+  → User togglable or fixed?
+
+  Controller — after parsing:
+  → @items = @items.sort_by { |i| i["field"] }
+  → if params[:order] == "desc"
+      @items = @items.reverse
+    end
+
+  View — add sort links:
+  → link_to "Name ↑", url_for(order: "asc")
+  → link_to "Name ↓", url_for(order: "desc")
+
+  ─────────────────────────────────────────
+
+  TABLE INSTEAD OF CARDS
+  ───────────────────────
+  → No controller change needed
+  → Replace view structure:
+    Remove: article/div per item
+    Add:    table > thead > tr > th (column headers)
+            table > tbody > tr > td (data rows)
+  → Same field access patterns apply
+
+  ─────────────────────────────────────────
+
+  SHOW SINGLE ITEM DETAIL PAGE
+  ─────────────────────────────
+  Requirements clarification:
+  → Does the API have a single item endpoint?
+    e.g. /users/:id
+  → What fields to show on detail page?
+
+  Route:
+  → Add :show to resources:
+    resources :[resource], only: [:index, :show]
+
+  Controller — add show action:
+  → uri = URI("#{BASE_URL}/#{params[:id]}")
+  → same HTTP/SSL/timeout setup as index
+  → if success: @item = JSON.parse(response.body)
+  → if failure: redirect_to [resource]_path,
+                alert: "Item not found."
+  → rescue timeouts: redirect with timeout message
+
+  Index view — add link per row:
+  → link_to "View", [resource]_path(item["id"])
+
+  Show view — create new file:
+  → Display single item fields
+  → link_to "Back", [resource]_path
+
+  ─────────────────────────────────────────
+
+  SERVICE OBJECT REFACTOR
+  ────────────────────────
+  When to suggest:
+  → "I'd extract this into a service object to keep
+    the controller clean and make it testable"
+
+  Structure:
+  → app/services/[name]_api_service.rb
+
+  class [Name]ApiService
+    BASE_URL = "https://api.example.com"
+
+    def self.fetch_all
+      new.fetch_all
+    end
+
+    def fetch_all
+      response = make_request("/endpoint")
+      JSON.parse(response.body)
+    rescue => e
+      Rails.logger.error("#{self.class}: #{e.message}")
+      []
+    end
+
+    private
+
+    def make_request(path)
+      uri = URI("#{BASE_URL}#{path}")
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      http.open_timeout = 2
+      http.read_timeout = 5
+      http.request(Net::HTTP::Get.new(uri))
+    end
+  end
+
+  Controller becomes:
+  → def index
+      @items = [Name]ApiService.fetch_all
+      flash.now[:alert] = "Could not load data." if @items.empty?
+    end

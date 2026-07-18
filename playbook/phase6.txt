@@ -1,0 +1,33 @@
+PHASE 6 TIDY UP, TEST AND TALK NEXT STEPS
+
+  THINGS TO CHECK:
+  -> Error state: simulate by breaking the URL temporarily
+  -> Empty state: does "No results found" appear correctly?
+  -> ERB escapes output by default — XSS protected
+    mention this: "ERB escapes by default so we're
+    protected against XSS from the API data" - TODO - understand this a bit better
+
+  THINGS TO SAY YOU'D DO NEXT:
+  -> "Extract API call into a service object:
+    app/services/[name]_service.rb
+    keeps controller thin, makes it unit testable
+    stub the HTTP call in tests with WebMock"
+
+  -> "Add caching:
+    Rails.cache.fetch('users', expires_in: 1.minute) do
+      [api call here]
+    end
+    avoids hitting the API on every page load" - TODO - understand this a bit better, possible example block here?
+
+  -> "Move base URL to environment variable:
+    ENV['API_BASE_URL']
+    never hardcode URLs in production code"
+
+  -> "For production I'd add a dedicated error page/partial
+    rather than just a flash message — render a meaningful
+    UI state rather than an empty table with a banner"
+
+  -> "Add pagination if dataset is large"
+
+  -> "Write tests that stub the HTTP call
+    so tests don't depend on external API availability"

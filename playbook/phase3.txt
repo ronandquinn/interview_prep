@@ -1,0 +1,21 @@
+PHASE 3 PLANNING OUT LOUD
+
+   "Here's my approach:
+   1. Add a route
+   2. Generate a controller
+   3. Fetch from the API in the controller using Net::HTTP
+      — no gem needed for a simple GET request
+   4. Parse the JSON and pass data to the view as an instance variable
+   5. Build a table in the view
+   6. Handle errors and empty states
+
+     ERROR HANDLING
+      Default approach:
+      flash.now[:alert] = "Could not load data."
+      @resource = [] #(empty collection so view doesn't break)
+
+   I won't need a model since we're not persisting anything.
+   I'll add timeouts to avoid the page hanging if the API is slow.
+   Happy to extract into a service object once it's working if we have time."
+
+   Basically stating out loud that we're about to implement the requirements

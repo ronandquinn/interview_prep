@@ -1,0 +1,19 @@
+FROM ruby:3.3-slim
+
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+    build-essential \
+    git \
+    curl \
+    libyaml-dev \
+    pkg-config && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY Gemfile Gemfile.lock ./
+RUN gem install bundler && bundle install
+
+COPY . .
+
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]

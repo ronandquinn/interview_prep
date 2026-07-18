@@ -1,0 +1,63 @@
+PHASE 2 API DOCS FINDINGS:
+  BASE URL
+  Q: "Where do all requests go?"
+  -> e.g. https://api.example.com/v1
+    Will be the root of the URI - see PHASE 4 CONTROLLER — index action
+
+
+  ENDPOINT
+  Q: "Which path do we need to get the data we need?"
+  -> e.g. /users, /posts, /products
+    Combine with base URL: URI("#{BASE_URL}/users") - see PHASE 4 CONTROLLER — index action
+
+
+
+  AUTHENTICATION METHOD
+  Q: Question 2 from Phase 1 will inform this - TODO Examples of API KEY implemetation
+  -> No auth: fetch directly
+  -> Bearer token:
+    request["Authorization"] = "Bearer #{token}"
+  -> Query param:
+    uri.query = URI.encode_www_form(api_key: key)
+
+
+  RESPONSE SHAPE - CRITICAL BEFORE WRITING PARSE LOGIC
+  Q: What format will the returned data take?
+  -> Array at root: [...]
+    parse directly: JSON.parse(response.body)
+  -> Wrapped in key: { "users": [...] }
+    parse then dig: JSON.parse(response.body)["users"]
+  -> Single object: { "id": 1, "name": "..." }
+    parse directly: JSON.parse(response.body)
+
+
+  NESTED DATA - TODO is this just a part of the above?
+  -> Flat: { "name": "...", "email": "...", "city": "..." }
+    access with: user["city"]
+  -> Nested: { "address": { "city": "..." } }
+    access with: user.dig("address", "city")
+    never chain brackets on unknown data — use dig()
+
+  
+  FIELD NAMES
+  JSON keys are strings not symbols
+    -> user["name"] not user[:name] or user.name
+    -> Note exact field names from the docs
+
+
+  PAGINATION
+  Q: "Does the API use pagination? If so, do we want access to all pages or just first?
+  -> If paginated support needed - TODO Examples of implementation
+    May need page/per_page params in request
+    uri.query = URI.encode_www_form(page: 1, per_page: 20)
+
+
+  ERROR RESPONSES
+  Q: " What do error responses look like? 404, 401, 500?
+  -? Useful for testing rescus blocks
+
+
+  TODOs:
+  - Example of authenticating with API KEY in request, for either controller (at first) and expanded service
+  - Is Nested Data section actually a part of Response Shape?
+  - Example of pagination in request, for either controller (at first) and expanded service

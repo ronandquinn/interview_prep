@@ -1,0 +1,21 @@
+PHASE 5 DISPLAY CLEANLY
+  QUESTIONS TO CONSIDER AS YOU BUILD THE VIEW:
+  -> Which fields are required vs nice to have?
+    Build required ones first
+
+  -> Are any fields nested?
+    Flat field:   item["city"]
+    Nested field: item.dig("address", "city")
+    Always use dig() for nested — safer than chaining
+
+  -> Do any fields need special handling?
+    Email:    mail_to item["email"]
+    URL:      link_to item["website"], "https://#{item["website"]}",
+              target: "_blank", rel: "noopener"
+    Date:     item["created_at"].to_date (or Time.parse)
+    Currency: number_to_currency(item["price"])
+
+  -> Say out loud:
+    "I'm building required fields first.
+    I'd add formatting for dates/currency in production
+    but I'll keep it simple for now."

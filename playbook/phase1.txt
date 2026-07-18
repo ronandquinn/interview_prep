@@ -1,0 +1,57 @@
+PHASE 1 REQUIREMENTS CLARIFICATION:
+  DATA PERSISTENCE
+  Q: "Dow we meed to store this data, or just display it live from the API"?
+  -> NO: No model, no migration, no DB, fetch directly in the corntroller
+  -> YES: we need model and DB tables for data models to be persisted
+    rails generate model [Resource] field:typoe field:type
+    rails db:migrate
+    feytch from API, save to DB, query DB in corntroller
+    consider async for large dataset
+
+
+  AUTHENTICATION
+  Q: "Does this API require any creds or API keys?"
+  -> NO: fetch directly, no config needed
+  -> YES: Where do creds live. Either Rails credentials or ENV Vars
+    Rails credentials:
+      store in Rails credentials - rails credentials:edit
+      acces via - Rails.application.credentials.dig(:api, :key)
+    ENV Vars:
+      add API_KEY to .env and access via ENV["API_KEY"] - TOOO. Ensure docker-compose is setup with a .env 
+
+  SCOPE
+  Q: "Are we building the full CRUD or just a read/display feature?"
+  -> READ ALL ONLY: Simplest option if only one action needed
+      get "/users", to: "users#index"
+  -> READ AND SHOW: Only need index and show routes
+    resources :users, only: [:index, :show]
+    → GET /users       → UsersController#index
+    → GET /users/:id   → UsersController#show
+  -> READ AND CREATE: index, show, new and create needed
+    resources :users, only: [:index, :show, :new, :create]
+    → GET  /users        → index
+    → GET  /users/:id    → show
+    → GET  /users/new    → new (form)
+    → POST /users        → create (submit form)
+  -> FUL CRUD:
+    resources :users
+    → GET    /users          → index
+    → GET    /users/:id      → show
+    → GET    /users/new      → new
+    → POST   /users          → create
+    → GET    /users/:id/edit → edit
+    → PATCH  /users/:id      → update
+    → DELETE /users/:id      → destroy
+
+
+  DISPLAY FORMAT
+  Q: "Ant preference on how data is presented?"
+  -> If not specified: default to table - see PHASE 4 VIEW section
+      (simplest, cleanest, easy to extend)
+  -> If cards/list requested: article or div per item
+  -> Either way: build required fields first, add extras if time
+
+
+
+TODOs:
+- Could we need to create and error page?
