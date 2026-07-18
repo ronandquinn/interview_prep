@@ -10,6 +10,8 @@ services:
       - "3001:3000"
     environment:
       - RAILS_ENV=development
+    env_file:
+      - .env
 
 volumes:
   bundle_cache:
